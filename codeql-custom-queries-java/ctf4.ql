@@ -168,23 +168,31 @@ class TypeConstraintValidatorContext extends RefType {
     }
   }
 
-predicate isSource(DataFlow::Node source) { 
-    /* TODO describe source */
-    //source.asExpr() instanceof StringLiteral
-    //source = ConstraintValidator.getParameter(0)
-    //source instanceof RemoteFlowSource
-    //ConstraintValidator = source.asExpr().hasQualifiedName("javax.validation", "ConstraintValidator")
+class MyTaintTrackingConfig extends TaintTracking::Configuration {
+MyTaintTrackingConfig() { this = "MyTaintTrackingConfig" }
 
-    source instanceof BeanValidationSource
+    override predicate isSource(DataFlow::Node source) { 
+        /* TODO describe source */
+        //source.asExpr() instanceof StringLiteral
+        //source = ConstraintValidator.getParameter(0)
+        //source instanceof RemoteFlowSource
+        //ConstraintValidator = source.asExpr().hasQualifiedName("javax.validation", "ConstraintValidator")
+
+        source instanceof BeanValidationSource
+    }
+
+    /* Step 1.2 */
+    override predicate isSink(DataFlow::Node sink) {
+        exists(MethodAccess ma |
+        ma.getMethod() instanceof BuildConstraintViolationWithTemplateMethod and
+        sink.asExpr() = ma.getArgument(0)
+        )
+    }
 }
 
-/* Step 1.2 */
-predicate isSink(DataFlow::Node sink) {
-    exists(MethodAccess ma |
-      ma.getMethod() instanceof BuildConstraintViolationWithTemplateMethod and
-      sink.asExpr() = ma.getArgument(0)
-    )
-}
+from MyTaintTrackingConfig cfg, DataFlow::PathNode source, DataFlow::PathNode sink
+where cfg.hasFlowPath(source, sink)
+select sink, source, sink, "Custom constraint error message contains unsanitized user data"
 
 // from Method method, MethodAccess call
 // where 
