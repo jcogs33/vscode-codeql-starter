@@ -149,6 +149,25 @@ module Bonus {
     }
   }
 
+/* Step 1.2 */
+/** The type `javax.validation.ConstraintValidatorContext`. */
+class TypeConstraintValidatorContext extends RefType {
+    TypeConstraintValidatorContext() {
+      this.hasQualifiedName("javax.validation", "ConstraintValidatorContext")
+    }
+  }
+  
+  /**
+   * A method named `buildConstraintViolationWithTemplate` declared on a subtype
+   * of `javax.validation.ConstraintValidatorContext`.
+   */
+  class BuildConstraintViolationWithTemplateMethod extends Method {
+    BuildConstraintViolationWithTemplateMethod() {
+      this.getDeclaringType().getASupertype*() instanceof TypeConstraintValidatorContext and
+      this.hasName("buildConstraintViolationWithTemplate")
+    }
+  }
+
 predicate isSource(DataFlow::Node source) { 
     /* TODO describe source */
     //source.asExpr() instanceof StringLiteral
@@ -157,6 +176,14 @@ predicate isSource(DataFlow::Node source) {
     //ConstraintValidator = source.asExpr().hasQualifiedName("javax.validation", "ConstraintValidator")
 
     source instanceof BeanValidationSource
+}
+
+/* Step 1.2 */
+predicate isSink(DataFlow::Node sink) {
+    exists(MethodAccess ma |
+      ma.getMethod() instanceof BuildConstraintViolationWithTemplateMethod and
+      sink.asExpr() = ma.getArgument(0)
+    )
 }
 
 // from Method method, MethodAccess call
